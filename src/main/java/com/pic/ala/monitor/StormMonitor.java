@@ -22,7 +22,8 @@ public class StormMonitor {
 	public static void main(String[] args) {
 
 		try {
-			Content c = Request.Get("http://hdp02.localdomain:8744/api/v1/topology/ApLogAnalyzerV1-2-1465290576")
+			String stormUiUrl = new StormUiRestApiUrl().withHost("localhost").asClusterURL("configuration");
+			Content c = Request.Get(stormUiUrl)
 					.execute().returnContent();
 			String topologyJson = c.asString();
 			JsonFactory factory = new JsonFactory();

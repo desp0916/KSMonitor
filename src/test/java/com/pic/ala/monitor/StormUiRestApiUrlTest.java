@@ -9,13 +9,14 @@ import org.junit.Test;
 public class StormUiRestApiUrlTest {
 
 	private StormUiRestApiUrl stormUiUrl;
+	private String scheme = StormUiRestApiUrl.SCHEME;
+	private String host = StormUiRestApiUrl.HOST;
+	private String port = StormUiRestApiUrl.PORT;
+	private String topologyId = "LogAnalyzerV1-1-1465290461";
 
 	@Before
 	public void setUp() {
-		stormUiUrl = new StormUiRestApiUrl()
-				.withHost("hdp02.localdomain")
-				.withTopologyId("LogAnalyzerV1-1-1465290461")
-				.withComponent("spout");
+		stormUiUrl = new StormUiRestApiUrl().withHost(host);
 	}
 
 	@After
@@ -25,36 +26,37 @@ public class StormUiRestApiUrlTest {
 
 	@Test
 	public void testClusterURL() {
-		String expected = "http://hdp02.localdomain:8744/api/v1/cluster/configuration";
+		String expected = scheme + "://" + host + ":" + port + StormUiRestApiUrl.PATH_CLUSTER + "configuration";
 		String result = stormUiUrl.asClusterURL("configuration");
 		assertEquals(expected, result);
 	}
 
 	@Test
 	public void testSupervisorURL() {
-		String expected = "http://hdp02.localdomain:8744/api/v1/supervisor/summary";
+		String expected = "http://" + host + ":" + port + StormUiRestApiUrl.PATH_SUPERVISOR + "summary";
 		String result = stormUiUrl.asSupervisorURL("summary");
 		assertEquals(expected, result);
 	}
 
 	@Test
 	public void testTopologyURL() {
-		String expected = "http://hdp02.localdomain:8744/api/v1/topology/LogAnalyzerV1-1-1465290461?";
-		String result = stormUiUrl.asTopologyURL();
+		String expected = scheme + "://" + host + ":" + port + StormUiRestApiUrl.PATH_TOPOLOGY + topologyId + "?";
+		String result = stormUiUrl.withTopologyId(topologyId).asTopologyURL();
 		assertEquals(expected, result);
 	}
 
 	@Test
 	public void testComponentURL() {
-		String expected = "http://hdp02.localdomain:8744/api/v1/topology/LogAnalyzerV1-1-1465290461/component/spout?";
-		String result = stormUiUrl.asComoponentURL();
+		String expected = scheme + "://" + host + ":" + port + StormUiRestApiUrl.PATH_TOPOLOGY + topologyId
+				+ "/component/spout?";
+		String result = stormUiUrl.withTopologyId(topologyId).withComponent("spout").asComoponentURL();
 		assertEquals(expected, result);
 	}
 
 	@Test
 	public void testTopologoyOperationURL() {
-		String expected = "http://hdp02.localdomain:8744/api/v1/topology/LogAnalyzerV1-1-1465290461/kill/0";
-		String result = stormUiUrl.asTopologyURL("kill", "0");
+		String expected = scheme + "://" + host + ":" + port + StormUiRestApiUrl.PATH_TOPOLOGY + topologyId + "/kill/0";
+		String result = stormUiUrl.withTopologyId(topologyId).asTopologyURL("kill", "0");
 		assertEquals(expected, result);
 	}
 }

@@ -55,14 +55,17 @@ public class StormUiRestApiUrl {
 	private String topologyId;
 	private String queryString;
 	private String component;
-	private static final String PATH_CLUSTER = "/api/v1/cluster/";
-	private static final String PATH_SUPERVISOR = "/api/v1/supervisor/";
-	private static final String PATH_TOPOLOGY = "/api/v1/topology/";
+	public static final String SCHEME = "http";
+	public static final String HOST = "localhost";
+	public static final String PORT = "8080";
+	public static final String PATH_CLUSTER = "/api/v1/cluster/";
+	public static final String PATH_SUPERVISOR = "/api/v1/supervisor/";
+	public static final String PATH_TOPOLOGY = "/api/v1/topology/";
 
 	public StormUiRestApiUrl() {
-		this.scheme = "http";
-		this.host = "localhost";
-		this.port = "8744";
+		this.scheme = SCHEME;
+		this.host = HOST;
+		this.port = PORT;
 		this.path = PATH_TOPOLOGY;
 		this.topologyId = "";
 		this.queryString = "";
@@ -134,10 +137,10 @@ public class StormUiRestApiUrl {
 
 	/**
 	 *
-	 * /api/v1/cluster/configuration (GET)
-	 * /api/v1/cluster/summary (GET)
+	 * /api/v1/cluster/configuration (GET) /api/v1/cluster/summary (GET)
 	 *
-	 * @param operation	 可以是 configuration 或 summary
+	 * @param operation
+	 *            可以是 configuration 或 summary
 	 * @return
 	 */
 	public String asClusterURL(String operation) {
@@ -154,7 +157,8 @@ public class StormUiRestApiUrl {
 	 *
 	 * /api/v1/supervisor/summary (GET)
 	 *
-	 * @param operation	 可以是 configuration 或 summary
+	 * @param operation
+	 *            可以是 configuration 或 summary
 	 * @return
 	 */
 	public String asSupervisorURL(String operation) {
