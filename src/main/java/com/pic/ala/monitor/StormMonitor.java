@@ -9,6 +9,7 @@ package com.pic.ala.monitor;
 
 import java.io.IOException;
 
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.fluent.Content;
 import org.apache.http.client.fluent.Request;
 
@@ -18,32 +19,33 @@ import com.fasterxml.jackson.core.JsonToken;
 
 public class StormMonitor {
 
-
 	public static void main(String[] args) {
 
 		try {
-			String stormUiUrl = new StormUiRestApiUrl().withHost("localhost").asClusterURL("configuration");
-			Content c = Request.Get(stormUiUrl)
-					.execute().returnContent();
+			String clusterUrl = new StormUiRestApiUrl().withHost("localhost").asClusterURL("configuration");
+			String topologyUrl = new StormUiRestApiUrl().withHost("localhost")
+					.withTopologyId("WordCountTopology-3-1465403918").asTopologyURL();
+			System.out.println(topologyUrl);
+			Content c = Request.Get(topologyUrl).execute().returnContent();
 			String topologyJson = c.asString();
 			JsonFactory factory = new JsonFactory();
 			JsonParser parser = factory.createParser(topologyJson);
 			while (!parser.isClosed()) {
 				JsonToken jsonToken = parser.nextToken();
-//				System.out.println("jsonToken = " + jsonToken);
+				// System.out.println("jsonToken = " + jsonToken);
 
 				if (JsonToken.FIELD_NAME.equals(jsonToken)) {
 					String fieldName = parser.getCurrentName();
-//					System.out.println(fieldName);
+					// System.out.println(fieldName);
 
 					jsonToken = parser.nextToken();
-					System.out.println(parser.getCurrentName() + ": "+ parser.getValueAsString());
-//
-//					if ("status".equals(fieldName)) {
-//						System.out.println(parser.getValueAsString());
-//					} else if ("topologyStats".equals(fieldName)) {
-//						System.out.println(parser.getValueAsString());
-//					}
+					System.out.println(parser.getCurrentName() + ": " + parser.getValueAsString());
+					//
+					// if ("status".equals(fieldName)) {
+					// System.out.println(parser.getValueAsString());
+					// } else if ("topologyStats".equals(fieldName)) {
+					// System.out.println(parser.getValueAsString());
+					// }
 				}
 			}
 		} catch (IOException e) {
@@ -62,4 +64,21 @@ public class StormMonitor {
 		// }
 	}
 
+	public String getTopologyJson(String topologyId) {
+		String topologyUrl = new StormUiRestApiUrl().withHost("localhost")
+				.withTopologyId(topologyId).asTopologyURL();
+		Content c = null;
+		String topologyJson = "";
+		try {
+			c = Request.Get(topologyUrl).execute().returnContent();
+		} catch (ClientProtocolException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if (c != null) {
+			topologyJson = c.asString();
+		}
+		return topologyJson;
+	}
 }
