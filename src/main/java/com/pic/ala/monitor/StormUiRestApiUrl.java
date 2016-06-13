@@ -50,14 +50,14 @@ public class StormUiRestApiUrl {
 
 	private String scheme;
 	private String host;
-	private String port;
+	private int port;
 	private String path;
 	private String topologyId;
 	private String queryString;
 	private String component;
 	public static final String SCHEME = "http";
 	public static final String HOST = "localhost";
-	public static final String PORT = "8080";
+	public static final int PORT = 8080;
 	public static final String PATH_CLUSTER = "/api/v1/cluster/";
 	public static final String PATH_SUPERVISOR = "/api/v1/supervisor/";
 	public static final String PATH_TOPOLOGY = "/api/v1/topology/";
@@ -90,11 +90,11 @@ public class StormUiRestApiUrl {
 		return this;
 	}
 
-	public String getPort() {
+	public int getPort() {
 		return port;
 	}
 
-	public StormUiRestApiUrl withPort(String port) {
+	public StormUiRestApiUrl withPort(int port) {
 		this.port = port;
 		return this;
 	}
@@ -103,7 +103,7 @@ public class StormUiRestApiUrl {
 		return path;
 	}
 
-	private StormUiRestApiUrl withPath(String path) {
+	public StormUiRestApiUrl withPath(String path) {
 		this.path = rtrim(ltrim(path));
 		return this;
 	}
@@ -135,12 +135,15 @@ public class StormUiRestApiUrl {
 		return this;
 	}
 
+	public String asClusterURL() {
+		return this.asClusterURL("");
+	}
 	/**
 	 *
-	 * /api/v1/cluster/configuration (GET) /api/v1/cluster/summary (GET)
+	 * /api/v1/cluster/configuration (GET)
+	 * /api/v1/cluster/summary (GET)
 	 *
-	 * @param operation
-	 *            可以是 configuration 或 summary
+	 * @param operation		可以是 configuration 或 summary
 	 * @return
 	 */
 	public String asClusterURL(String operation) {
@@ -149,16 +152,18 @@ public class StormUiRestApiUrl {
 		if (operation == null || !Arrays.asList(validOperations).contains(operation)) {
 			operation = "summary";
 		}
-		String URL = String.format("%s://%s:%s/%s/%s", scheme, host, port, path, operation);
+		String URL = String.format("%s://%s:%d/%s/%s", scheme, host, port, path, operation);
 		return URL;
 	}
 
+	public String asSupervisorURL() {
+		return this.asSupervisorURL("");
+	}
 	/**
 	 *
 	 * /api/v1/supervisor/summary (GET)
 	 *
-	 * @param operation
-	 *            可以是 configuration 或 summary
+	 * @param operation		可以是 configuration 或 summary
 	 * @return
 	 */
 	public String asSupervisorURL(String operation) {
@@ -167,7 +172,7 @@ public class StormUiRestApiUrl {
 		if (operation == null || !Arrays.asList(validOperations).contains(operation)) {
 			operation = "summary";
 		}
-		String URL = String.format("%s://%s:%s/%s/%s", scheme, host, port, path, operation);
+		String URL = String.format("%s://%s:%d/%s/%s", scheme, host, port, path, operation);
 		return URL;
 	}
 
@@ -177,21 +182,7 @@ public class StormUiRestApiUrl {
 	 * @return
 	 */
 	public String asTopologyURL() {
-		this.withPath(PATH_TOPOLOGY);
-		String URL = String.format("%s://%s:%s/%s/%s?%s", scheme, host, port, path, topologyId, queryString);
-		return URL;
-	}
-
-	/**
-	 * /api/v1/topology/:id/component/:component (GET)
-	 *
-	 * @return
-	 */
-	public String asComoponentURL() {
-		this.withPath(PATH_TOPOLOGY);
-		String URL = String.format("%s://%s:%s/%s/%s/component/%s?%s", scheme, host, port, path, topologyId, component,
-				queryString);
-		return URL;
+		return this.asTopologyURL("", "");
 	}
 
 	/**
@@ -204,7 +195,12 @@ public class StormUiRestApiUrl {
 		this.withPath(PATH_TOPOLOGY);
 		String URL = String.format("%s://%s:%s/%s/%s", scheme, host, port, path, topologyId);
 		String[] validOperations = new String[] {"activate", "deactivate", "rebalance", "kill"};
-		if (operation == null || !Arrays.asList(validOperations).contains(operation)) {
+		if ((operation == null || operation.length() == 0) && (waitTime == null || waitTime.length() == 0)) {
+			URL = String.format("%s://%s:%d/%s/%s?%s", scheme, host, port, path, topologyId, queryString);
+			if (queryString != null && queryString.length() > 0) {
+				URL = String.format("%s?%s", URL, queryString);
+			}
+		} else if (operation == null || !Arrays.asList(validOperations).contains(operation)) {
 			throw new InvalidParameterException("Invalid operation parameter: " + operation.toString());
 		} else if (("rebalance").equals(operation) || ("kill").equals(operation)) {
 			if (waitTime == null || Integer.parseInt(waitTime) < 0) {
@@ -214,6 +210,16 @@ public class StormUiRestApiUrl {
 		} else {
 			URL = String.format("%s/%s", URL, operation);
 		}
+		return URL;
+	}
+
+	/**
+	 * /api/v1/topology/:id/component/:component (GET)
+	 *
+	 * @return
+	 */
+	public String asComoponentURL() {
+		String URL = String.format("%s/component/%s?%s", this.asTopologyURL(), component, queryString);
 		return URL;
 	}
 
