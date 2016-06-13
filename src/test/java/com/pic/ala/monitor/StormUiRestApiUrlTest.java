@@ -1,5 +1,6 @@
 package com.pic.ala.monitor;
 
+import static com.pic.ala.monitor.StormUiRestApiUrl.trim;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.After;
@@ -11,7 +12,7 @@ public class StormUiRestApiUrlTest {
 	private StormUiRestApiUrl stormUiUrl;
 	private String scheme = StormUiRestApiUrl.SCHEME;
 	private String host = StormUiRestApiUrl.HOST;
-	private String port = StormUiRestApiUrl.PORT;
+	private int port = StormUiRestApiUrl.PORT;
 	private String topologyId = "LogAnalyzerV1-1-1465290461";
 
 	@Before
@@ -26,36 +27,37 @@ public class StormUiRestApiUrlTest {
 
 	@Test
 	public void testClusterURL() {
-		String expected = scheme + "://" + host + ":" + port + StormUiRestApiUrl.PATH_CLUSTER + "configuration";
+		String expected = String.format("%s://%s:%d/%s/configuration", scheme, host, port, trim(StormUiRestApiUrl.PATH_CLUSTER));
 		String result = stormUiUrl.asClusterURL("configuration");
 		assertEquals(expected, result);
 	}
 
 	@Test
 	public void testSupervisorURL() {
-		String expected = "http://" + host + ":" + port + StormUiRestApiUrl.PATH_SUPERVISOR + "summary";
+		String expected = String.format("%s://%s:%d/%s/summary", scheme, host, port, trim(StormUiRestApiUrl.PATH_SUPERVISOR));
 		String result = stormUiUrl.asSupervisorURL("summary");
 		assertEquals(expected, result);
 	}
 
 	@Test
 	public void testTopologyURL() {
-		String expected = scheme + "://" + host + ":" + port + StormUiRestApiUrl.PATH_TOPOLOGY + topologyId + "?";
+		String expected = String.format("%s://%s:%s/%s/%s", scheme, host, port, trim(StormUiRestApiUrl.PATH_TOPOLOGY), topologyId);
 		String result = stormUiUrl.withTopologyId(topologyId).asTopologyURL();
+		System.out.println(expected);
+		System.out.println(result);
 		assertEquals(expected, result);
 	}
 
 	@Test
 	public void testComponentURL() {
-		String expected = scheme + "://" + host + ":" + port + StormUiRestApiUrl.PATH_TOPOLOGY + topologyId
-				+ "/component/spout?";
+		String expected = String.format("%s://%s:%d/%s/%s/component/spout?", scheme, host, port, trim(StormUiRestApiUrl.PATH_TOPOLOGY), topologyId);
 		String result = stormUiUrl.withTopologyId(topologyId).withComponent("spout").asComoponentURL();
 		assertEquals(expected, result);
 	}
 
 	@Test
 	public void testTopologoyOperationURL() {
-		String expected = scheme + "://" + host + ":" + port + StormUiRestApiUrl.PATH_TOPOLOGY + topologyId + "/kill/0";
+		String expected = String.format("%s://%s:%d/%s/%s/kill/0", scheme, host, port, trim(StormUiRestApiUrl.PATH_TOPOLOGY), topologyId);
 		String result = stormUiUrl.withTopologyId(topologyId).asTopologyURL("kill", "0");
 		assertEquals(expected, result);
 	}

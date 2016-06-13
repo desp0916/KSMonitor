@@ -104,7 +104,7 @@ public class StormUiRestApiUrl {
 	}
 
 	public StormUiRestApiUrl withPath(String path) {
-		this.path = rtrim(ltrim(path));
+		this.path = trim(path);
 		return this;
 	}
 
@@ -196,13 +196,14 @@ public class StormUiRestApiUrl {
 		String URL = String.format("%s://%s:%s/%s/%s", scheme, host, port, path, topologyId);
 		String[] validOperations = new String[] {"activate", "deactivate", "rebalance", "kill"};
 		if ((operation == null || operation.length() == 0) && (waitTime == null || waitTime.length() == 0)) {
-			URL = String.format("%s://%s:%d/%s/%s?%s", scheme, host, port, path, topologyId, queryString);
+			URL = String.format("%s://%s:%d/%s/%s", scheme, host, port, path, topologyId);
 			if (queryString != null && queryString.length() > 0) {
 				URL = String.format("%s?%s", URL, queryString);
 			}
 		} else if (operation == null || !Arrays.asList(validOperations).contains(operation)) {
 			throw new InvalidParameterException("Invalid operation parameter: " + operation.toString());
 		} else if (("rebalance").equals(operation) || ("kill").equals(operation)) {
+
 			if (waitTime == null || Integer.parseInt(waitTime) < 0) {
 				waitTime = "0";
 			}
@@ -245,6 +246,9 @@ public class StormUiRestApiUrl {
 		return RTRIM.matcher(s).replaceAll("");
 	}
 
+	public static String trim(String s) {
+		return rtrim(ltrim(s));
+	}
 	public static void main(String args[]) {
 
 	}
