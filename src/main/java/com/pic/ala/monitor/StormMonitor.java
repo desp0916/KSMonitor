@@ -8,159 +8,52 @@
 package com.pic.ala.monitor;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.fluent.Content;
 import org.apache.http.client.fluent.Request;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class StormMonitor {
 
-	private String scheme;
-	private String host;
-	private int port;
-	private String path;
-	private String topologyId;
-	private String queryString;
-	private String component;
+	private String scheme = StormUiRestApiUrl.SCHEME;
+	private StormUiRestApiUrl url = new StormUiRestApiUrl();
+	private Map<String, Object> config = new HashMap<String, Object>();
 
-
-	StormMonitor() {
-	}
-
-	public StormMonitor(String host) {
-		this.host = host;
-	}
-
-	public String getScheme() {
-		return scheme;
-	}
-
-	public void setScheme(String scheme) {
+	private void setScheme(String scheme) {
 		this.scheme = scheme;
 	}
 
-	public String getHost() {
-		return host;
+	public StormMonitor() {
+		this.setUrl(StormUiRestApiUrl.HOST, StormUiRestApiUrl.PORT, null, null, null);
 	}
 
-	public void setHost(String host) {
-		this.host = host;
+	public StormMonitor(String host) {
+		this.setUrl(host, StormUiRestApiUrl.PORT, null, null, null);
 	}
 
-	public int getPort() {
-		return port;
+	public StormMonitor(String host, int port) {
+		this.setUrl(host, port, null, null, null);
 	}
 
-	public void setPort(int port) {
-		this.port = port;
-	}
-
-	public String getPath() {
-		return path;
-	}
-
-	public void setPath(String path) {
-		this.path = path;
-	}
-
-	public String getTopologyId() {
-		return topologyId;
-	}
-
-	public void setTopologyId(String topologyId) {
-		this.topologyId = topologyId;
-	}
-
-	public String getQueryString() {
-		return queryString;
-	}
-
-	public void setQueryString(String queryString) {
-		this.queryString = queryString;
-	}
-
-	public String getComponent() {
-		return component;
-	}
-
-	public void setComponent(String component) {
-		this.component = component;
-	}
-
-	public static void main(String[] args) {
-
-		String host = "hdp02.localdomain";
-		int port = 8744;
-		String topologyId = "ApLogGeneratorV1-2-1465033997";
-
-		StormMonitor stormMonitor = new StormMonitor(host);
-		stormMonitor.setPort(port);
-
-		String clusterJson = stormMonitor.getClusterJson();
-		System.out.println(clusterJson);
-
-		String supervisorJson = stormMonitor.getSupervisorJson();
-		System.out.println(supervisorJson);
-
-		stormMonitor.setTopologyId(topologyId);
-		String topologyJson = stormMonitor.getTopologyJson();
-		System.out.println(topologyJson);
-
-
-
-	}
-
-	public static void mainx(String[] args) {
-		try {
-			String clusterUrl = new StormUiRestApiUrl().withHost("hdp02.localdomain").asClusterURL("configuration");
-			String topologyUrl = new StormUiRestApiUrl().withHost("hdp02.localdomain").withPort(8744)
-					.withTopologyId("ApLogGeneratorV1-2-1465033997").asTopologyURL();
-			System.out.println(topologyUrl);
-			Content c = Request.Get(topologyUrl).execute().returnContent();
-			String topologyJson = c.asString();
-			JsonFactory factory = new JsonFactory();
-			JsonParser parser = factory.createParser(topologyJson);
-			while (!parser.isClosed()) {
-				JsonToken jsonToken = parser.nextToken();
-				// System.out.println("jsonToken = " + jsonToken);
-
-				if (JsonToken.FIELD_NAME.equals(jsonToken)) {
-					String fieldName = parser.getCurrentName();
-					// System.out.println(fieldName);
-
-					jsonToken = parser.nextToken();
-					System.out.println(parser.getCurrentName() + ": " + parser.getValueAsString());
-					//
-					// if ("status".equals(fieldName)) {
-					// System.out.println(parser.getValueAsString());
-					// } else if ("topologyStats".equals(fieldName)) {
-					// System.out.println(parser.getValueAsString());
-					// }
-				}
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		// try {
-		// Content c = Request.Post("http://targethost/login")
-		// .bodyForm(Form.form().add("username", "vip").add("password",
-		// "secret").build()).execute()
-		// .returnContent();
-		// System.out.println(c.asString());
-		// } catch (IOException e) {
-		// // TODO Auto-generated catch block
-		// e.printStackTrace();
-		// }
+	public void setUrl(String host, int port, String topologyId, String component, String queryString) {
+		this.url.withScheme(scheme).withHost(host).withPort(port).withTopologyId(topologyId).withComponent(component);
 	}
 
 	public String getClusterJson() {
-		String url = new StormUiRestApiUrl().withHost(host).withPort(port).asClusterURL();
-		return this.getJson(url);
+		return getClusterJson("");
+	}
+
+	public String getClusterJson(String operation) {
+		return getJsonResponse(this.url.withScheme(scheme).asClusterURL(operation));
 	}
 
 	public String getSupervisorJson() {
@@ -168,22 +61,27 @@ public class StormMonitor {
 	}
 
 	public String getSupervisorJson(String operation) {
-		String url;
-		if (operation == null || operation.length() == 0) {
-			url = new StormUiRestApiUrl().withHost(host).withPort(port).asSupervisorURL();
-		} else {
-			url = new StormUiRestApiUrl().withHost(host).withPort(port).asSupervisorURL(operation);
-		}
-		return this.getJson(url);
+		return getJsonResponse(this.url.withScheme(scheme).asSupervisorURL(operation));
 	}
 
 	public String getTopologyJson() {
-		String url = new StormUiRestApiUrl().withHost(host).withPort(port)
-				.withTopologyId(topologyId).asTopologyURL();
-		return this.getJson(url);
+		return getJsonResponse(this.url.withScheme(scheme).asTopologyURL());
 	}
 
-	public String getJson(String url) {
+	public String getTopologyJson(String topologyId) {
+		return getJsonResponse(this.url.withScheme(scheme).withTopologyId(topologyId).asTopologyURL());
+	}
+
+	public String getTopologyJson(String topologyId, String operation, int waitTime) {
+		return getJsonResponse(this.url.withScheme(scheme).withTopologyId(topologyId).asTopologyURL(operation, waitTime));
+	}
+
+	public String getComponentJson(String topologyId, String component) {
+		return getJsonResponse(this.url.withScheme(scheme).withTopologyId(topologyId).withComponent(component).asComoponentURL());
+	}
+
+	public static String getJsonResponse(String url) {
+		System.out.println(url);
 		Content c = null;
 		String json = "";
 		try {
@@ -198,4 +96,57 @@ public class StormMonitor {
 		}
 		return json;
 	}
+
+	public static void main(String[] args) {
+		StormMonitor sm = new StormMonitor("hdp02.localdomain", 8744);
+//		sm.setScheme("https");
+
+//		String clusterJson = sm.getClusterJson();
+//		System.out.println("clusterJson:" + clusterJson);
+//
+//		String supervisorJson = sm.getSupervisorJson();
+//		System.out.println("supervisorJson:" + supervisorJson);
+//
+//		String topologySummaryJson = sm.getTopologyJson();
+//		System.out.println("topologySummaryJson:" + topologySummaryJson);
+//
+//		String topologyJson = sm.getTopologyJson("ApLogAnalyzerV1-2-1465290576");
+//		System.out.println("topologyJson:" + topologyJson);
+//
+//		String componentJson = sm.getComponentJson("ApLogAnalyzerV1-2-1465290576", "kafkaSpout");
+//		System.out.println("componentJson: " + componentJson);
+
+		List<JsonNode> allTopologies = getAllTopologies();
+
+		for (JsonNode topology : allTopologies) {
+			String topologyId = topology.get("id").asText();
+			String topologyJson = sm.getTopologyJson(topologyId);
+			System.out.println(topologyJson);
+		}
+	}
+
+	private static List<JsonNode> getAllTopologies() {
+		List<JsonNode> allTopologies = new ArrayList<JsonNode>();
+		ObjectMapper objectMapper = new ObjectMapper();
+
+		try {
+			StormMonitor sm = new StormMonitor("hdp02.localdomain", 8744);
+			String topologySummaryJson = sm.getTopologyJson();
+			// http://tutorials.jenkov.com/java-json/jackson-objectmapper.html
+			JsonNode node = objectMapper.readValue(topologySummaryJson, JsonNode.class);
+		    JsonNode topologies = node.get("topologies");
+		    for (int i = 0; i < topologies.size(); i++) {
+			    JsonNode topology = topologies.get(i);
+			    allTopologies.add(topology);
+		    }
+		} catch (JsonParseException e) {
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return allTopologies;
+	}
+
 }
